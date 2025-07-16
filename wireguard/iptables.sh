@@ -27,3 +27,8 @@ sudo iptables -A FORWARD -i wlp11s0 -o wg0 -m conntrack --ctstate RELATED,ESTABL
 
 # NAT for VPN clients
 sudo iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o wlp11s0 -j MASQUERADE
+
+# Allow Samba ports from WireGuard clients
+sudo iptables -A INPUT -i wg0 -p tcp -m multiport --dports 139,445 -j ACCEPT
+sudo iptables -A INPUT -i wg0 -p udp -m multiport --dports 137,138 -j ACCEPT
+
