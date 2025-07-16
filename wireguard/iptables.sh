@@ -12,8 +12,12 @@ sudo iptables -P OUTPUT ACCEPT
 sudo iptables -A INPUT -i lo -j ACCEPT
 sudo iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 
-# Allow SSH
-sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+# Allow SSH only from LAN
+sudo iptables -A INPUT -p tcp --dport 22 -s 192.168.29.0/24 -j ACCEPT
+
+# Allow SSH only from VPN (WireGuard subnet)
+sudo iptables -A INPUT -p tcp --dport 22 -s 10.0.0.0/24 -j ACCEPT
+
 
 # Allow WireGuard (UDP 51820)
 sudo iptables -A INPUT -p udp --dport 51820 -j ACCEPT
