@@ -18,8 +18,11 @@ sudo ip6tables -A FORWARD -p ipv6-icmp -j ACCEPT
 # Allow WireGuard over IPv6 (UDP 51820)
 sudo ip6tables -A INPUT -p udp --dport 51820 -j ACCEPT
 
-# Allow SSH over IPv6
-sudo ip6tables -A INPUT -p tcp --dport 22 -j ACCEPT
+# Allow SSH from local IPv6 LAN (ULA)
+sudo ip6tables -A INPUT -p tcp --dport 22 -s fd00::/8 -j ACCEPT
+
+# Allow SSH from WireGuard clients (VPN subnet)
+sudo ip6tables -A INPUT -i wg0 -p tcp --dport 22 -j ACCEPT
 
 # Allow HTTP from local ULA subnet only
 sudo ip6tables -A INPUT -p tcp --dport 80 -s fd00::/8 -j ACCEPT
