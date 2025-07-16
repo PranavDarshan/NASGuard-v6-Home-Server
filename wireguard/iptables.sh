@@ -46,3 +46,7 @@ sudo iptables -A FORWARD -i wlp11s0 -o wg0 -m conntrack --ctstate RELATED,ESTABL
 
 # NAT for VPN clients
 sudo iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o wlp11s0 -j MASQUERADE
+
+sudo ip6tables -N DOCKER-USER
+sudo ip6tables -I FORWARD -j DOCKER-USER
+sudo ip6tables -I DOCKER-USER -i wg0 -p tcp --dport 19999 -j REJECT
