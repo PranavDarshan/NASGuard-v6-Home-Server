@@ -19,7 +19,7 @@ sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 sudo iptables -A INPUT -p udp --dport 51820 -j ACCEPT
 
 # Allow HTTP (port 80) only from local network
-sudo iptables -A INPUT -p tcp --dport 80 -s 192.168.1.0/24 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 80 -s 192.168.1.0/16 -j ACCEPT
 
 # WireGuard forwarding rules
 sudo iptables -A FORWARD -i wg0 -o wlp11s0 -j ACCEPT
