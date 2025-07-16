@@ -1,40 +1,29 @@
-#!/bin/bash
+# Flush old rules
+sudo iptables -F
+sudo iptables -t nat -F
+sudo iptables -X
 
-# Flush all existing rules
-iptables -F
-iptables -t nat -F
-iptables -t mangle -F
-ip6tables -F
-ip6tables -t nat -F
-ip6tables -t mangle -F
+# Default policies
+sudo iptables -P INPUT DROP
+sudo iptables -P FORWARD DROP
+sudo iptables -P OUTPUT ACCEPT
 
-# Set default policies
-iptables -P INPUT ACCEPT
-iptables -P FORWARD ACCEPT
-iptables -P OUTPUT ACCEPT
-ip6tables -P INPUT ACCEPT
-ip6tables -P FORWARD ACCEPT
-ip6tables -P OUTPUT ACCEPT
+# Loopback and related traffic
+sudo iptables -A INPUT -i lo -j ACCEPT
+sudo iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 
-# === IPv4 NAT Rules ===
-# Masquerade traffic from wg0 to outbound interface (wlp11s0)
-iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o wlp11s0 -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o wlp11s0 -j MASQUERADE
+# Allow SSH
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 
-# === IPv4 FORWARD Rules ===
-iptables -A FORWARD -i wg0 -o wlp11s0 -j ACCEPT
-iptables -A FORWARD -i wlp11s0 -o wg0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-iptables -A FORWARD -i wg0 -o wlp11s0 -j ACCEPT
-iptables -A FORWARD -i wlp11s0 -o wg0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+# Allow WireGuard
+sudo iptables -A INPUT -p udp --dport 51820 -j ACCEPT
 
-# === IPv6 Rules ===
-# These are default ACCEPT for all chains
-# No NAT is applied unless using special IPv6 NPT66
-ip6tables -t mangle -P PREROUTING ACCEPT
-ip6tables -t mangle -P INPUT ACCEPT
-ip6tables -t mangle -P FORWARD ACCEPT
-ip6tables -t mangle -P OUTPUT ACCEPT
-ip6tables -t mangle -P POSTROUTING ACCEPT
+# Allow HTTP (port 80) only from local network
+sudo iptables -A INPUT -p tcp --dport 80 -s 192.168.1.0/24 -j ACCEPT
 
-# Ensure persistence
-netfilter-persistent save
+# WireGuard forwarding rules
+sudo iptables -A FORWARD -i wg0 -o wlp11s0 -j ACCEPT
+sudo iptables -A FORWARD -i wlp11s0 -o wg0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+# NAT for VPN clients
+sudo iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o wlp11s0 -j MASQUERADE
