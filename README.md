@@ -187,12 +187,99 @@ sudo systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.
 
 With this setup, Debian will no longer suspend on lid close, and all network and system services will continue uninterrupted.
 
+## 🛡️ AdGuard Home (Docker) Setup
+
+This section describes how to deploy and configure **AdGuard Home** using Docker on your Debian-based server, with support for LAN and VPN clients (via WireGuard).
+
+---
+
+#### 📦 Running AdGuard Home in Docker
+
+AdGuard Home is deployed in Docker using the following command:
+
+```bash
+sudo docker run --name adguardhome -d \
+  -v /opt/adguardhome/work:/opt/adguardhome/work \
+  -v /opt/adguardhome/conf:/opt/adguardhome/conf \
+  -p 53:53/tcp -p 53:53/udp \
+  -p 3000:3000/tcp \
+  adguard/adguardhome
+```
+
+* Port `53`: Standard DNS service (UDP and TCP)
+* Port `3000`: AdGuard Web UI
+* Data is persisted in `/opt/adguardhome/` under `work/` and `conf/`
+
+---
+
+#### 🔐 Firewall Configuration
+
+Make sure your `iptables` and `ip6tables` rules allow traffic to AdGuard services:
+
+**IPv4 rules:**
+
+```bash
+# Allow DNS from LAN
+sudo iptables -A INPUT -p udp --dport 53 -s 192.168.29.0/24 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 53 -s 192.168.29.0/24 -j ACCEPT
+
+# Allow DNS from WireGuard clients
+sudo iptables -A INPUT -i wg0 -p udp --dport 53 -j ACCEPT
+sudo iptables -A INPUT -i wg0 -p tcp --dport 53 -j ACCEPT
+
+# Allow Web UI from LAN and WireGuard
+sudo iptables -A INPUT -p tcp --dport 3000 -s 192.168.29.0/24 -j ACCEPT
+
+```
+
+**IPv6 rules:**
+
+```bash
+# Allow DNS from local ULA and WireGuard clients
+sudo ip6tables -A INPUT -p udp --dport 53 -s fd00::/8 -j ACCEPT
+sudo ip6tables -A INPUT -p tcp --dport 53 -s fd00::/8 -j ACCEPT
+sudo ip6tables -A INPUT -i wg0 -p udp --dport 53 -j ACCEPT
+sudo ip6tables -A INPUT -i wg0 -p tcp --dport 53 -j ACCEPT
+
+# Allow Web UI
+sudo ip6tables -A INPUT -p tcp --dport 3000 -s fd00::/8 -j ACCEPT
+
+```
+
+---
+
+
+---
+
+#### 🔁 Persistence
+
+To ensure Docker restarts AdGuard on boot:
+
+```bash
+sudo docker update --restart unless-stopped adguardhome
+```
+
+---
+
+#### ⚠️ Notes
+
+* Port 53 must be free. If `connman` or `systemd-resolved` is using it, disable them.
+* You can edit AdGuard config at `/opt/adguardhome/conf/AdGuardHome.yaml`
+* Use `bind_host: 0.0.0.0` to make the service available to all interfaces.
+
+---
+
+✅ You now have AdGuard Home running with LAN + VPN access via Docker.
+
 
 ## 🧪 Testing
 
 * Use `ping 10.0.0.1` from client
 * `sudo wg` on server to check VPN handshakes
 * `smbclient //10.0.0.1/SecureShare -U smbuser` for Samba test
+* Web UI: `http://192.168.29.4:3000` or via VPN IP
+* DNS: Point clients to `192.168.29.4` or its IPv6 address (`fd00::...`)
+* Configure DNS-over-HTTPS/DoT in AdGuard as needed
 
 ---
 
@@ -201,6 +288,7 @@ With this setup, Debian will no longer suspend on lid close, and all network and
 * All services are only accessible via VPN
 * IPv6 traffic is isolated from the WAN
 * Strong firewall rules included
+* Note my home network is `192.168.29.0` therefore I have used `192.168.29.0/24` in the IP tables. Change this IP to your home network IP `192.168.x.0/24`.
 
 ---
 
