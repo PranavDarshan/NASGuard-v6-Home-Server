@@ -1,4 +1,4 @@
-# NASGuard-v6 
+# NASGuard-v6-Home-Server
 
 > A lightweight, IPv6-only NAS with secure WireGuard VPN access. Built on Debian 12 (32-bit) for older hardware with public static IPv6. Samba is used for file sharing over the private VPN.
 <img src=https://github.com/PranavDarshan/NASguard-v6/blob/main/assets/output.png/>
