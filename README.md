@@ -47,6 +47,7 @@ Keys will be saved in `keys/` folder.
 
 ```bash
 sudo bash iptables.sh
+sudo bash ip6tables.sh
 sudo netfilter-persistent save
 ```
 
