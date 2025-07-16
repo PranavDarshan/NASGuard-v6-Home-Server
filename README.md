@@ -51,6 +51,28 @@ sudo bash ip6tables.sh
 sudo netfilter-persistent save
 ```
 
+### 💾 Saving Firewall Rules
+
+To persist firewall rules across reboots:
+
+#### 1. Install iptables-persistent
+
+```bash
+sudo apt update
+sudo apt install iptables-persistent
+```
+
+#### 2. Save the Current Rules
+
+```bash
+sudo iptables-save > /etc/iptables/rules.v4
+sudo ip6tables-save > /etc/iptables/rules.v6
+```
+
+These rules will automatically apply on boot.
+
+---
+
 Ensure `wg0` forwards traffic properly (already configured in `iptables.sh`).
 
 #### After IP tables are set up, you should get something like this.
@@ -271,6 +293,66 @@ sudo docker update --restart unless-stopped adguardhome
 
 ✅ You now have AdGuard Home running with LAN + VPN access via Docker.
 
+## 📊 Netdata Docker Monitoring Setup
+
+This section covers how to run and configure Netdata using Docker, with custom firewall rules and IPv6 handling.
+
+---
+
+### 🚀 Running Netdata via Docker
+
+To deploy Netdata in a Docker container with cloud features disabled:
+
+```bash
+docker run -d \
+  --name=netdata \
+  -p 19999:19999 \
+  --restart unless-stopped \
+  -v netdataconfig:/etc/netdata \
+  -v netdatalib:/var/lib/netdata \
+  -v netdatacache:/var/cache/netdata \
+  -v /etc/passwd:/host/etc/passwd:ro \
+  -v /etc/group:/host/etc/group:ro \
+  -v /proc:/host/proc:ro \
+  -v /sys:/host/sys:ro \
+  -v /etc/os-release:/host/etc/os-release:ro \
+  -e NETDATA_CLAIM_TOKEN=disable \
+  --cap-add SYS_PTRACE \
+  --security-opt apparmor=unconfined \
+  netdata/netdata
+```
+
+This setup disables cloud login and ensures data remains local.
+
+---
+
+### 🔐 Firewall Rules for Netdata Access
+
+You can restrict access to Netdata (port `19999`) using `iptables` and `ip6tables`.
+
+#### IPv4 Rules
+
+* Allow access only from LAN:
+
+```bash
+sudo iptables -A INPUT -p tcp --dport 19999 -s 192.168.29.0/24 -j ACCEPT
+```
+
+* Block access from VPN clients (WireGuard):
+
+```bash
+sudo iptables -A INPUT -i wg0 -p tcp --dport 19999 -j REJECT
+```
+
+#### IPv6 Rules
+
+* Block access from WireGuard on IPv6:
+
+```bash
+sudo ip6tables -A INPUT -i wg0 -p tcp --dport 19999 -j REJECT
+```
+
+---
 
 ## 🧪 Testing
 
