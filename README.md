@@ -106,6 +106,87 @@ Use credentials created via `samba-setup.sh`
 
 ---
 
+## 🖥️ Keep Debian 12 Running with Lid Closed
+
+This section documents how to prevent your Debian 12 laptop from suspending when the lid is closed — ensuring services like Wi-Fi, SSH, and background tasks continue to operate.
+
+### ✅ Goals
+
+* Disable suspend on lid close
+* Keep Wi-Fi and all services running
+* Optional: Fully block all suspension paths (systemd targets)
+
+### ⚙️ Steps
+
+#### 1. Configure systemd-logind
+
+Edit `/etc/systemd/logind.conf`:
+
+```ini
+HandleLidSwitch=ignore
+HandleLidSwitchDocked=ignore
+HandleLidSwitchExternalPower=ignore
+```
+
+Then apply changes:
+
+```bash
+sudo systemctl restart systemd-logind
+```
+
+#### 2. Mask system suspend targets (recommended)
+
+Prevent all suspend actions:
+
+```bash
+sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+```
+
+> This ensures no service or user session can suspend the system — great for 24/7 headless or docked setups.
+
+#### 3. Disable power management daemons (optional)
+
+Check if any are active:
+
+```bash
+systemctl list-units --type=service | grep -E 'tlp|acpid|powerd|upower|sleep'
+```
+
+Disable any unnecessary services:
+
+```bash
+sudo systemctl disable --now upower.service
+```
+
+#### 4. GNOME-specific configuration (if applicable)
+
+As a **non-root user**, run:
+
+```bash
+gsettings set org.gnome.settings-daemon.plugins.power lid-close-ac-action 'nothing'
+gsettings set org.gnome.settings-daemon.plugins.power lid-close-battery-action 'nothing'
+```
+
+Verify with:
+
+```bash
+gsettings get org.gnome.settings-daemon.plugins.power lid-close-ac-action
+gsettings get org.gnome.settings-daemon.plugins.power lid-close-battery-action
+```
+
+### 🔄 To Re-enable Suspend
+
+Unmask the targets:
+
+```bash
+sudo systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.target
+```
+
+---
+
+With this setup, Debian will no longer suspend on lid close, and all network and system services will continue uninterrupted.
+
+
 ## 🧪 Testing
 
 * Use `ping 10.0.0.1` from client
