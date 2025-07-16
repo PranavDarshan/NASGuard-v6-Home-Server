@@ -27,3 +27,7 @@ sudo ip6tables -A INPUT -p tcp --dport 80 -s fd00::/8 -j ACCEPT
 # Allow forwarding between WireGuard and internet (for clients)
 sudo ip6tables -A FORWARD -i wg0 -o wlp11s0 -j ACCEPT
 sudo ip6tables -A FORWARD -i wlp11s0 -o wg0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+# Allow Samba over IPv6 (if used) from WireGuard clients
+sudo ip6tables -A INPUT -i wg0 -p tcp -m multiport --dports 139,445 -j ACCEPT
+sudo ip6tables -A INPUT -i wg0 -p udp -m multiport --dports 137,138 -j ACCEPT
