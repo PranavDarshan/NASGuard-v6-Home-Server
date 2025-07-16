@@ -34,3 +34,7 @@ sudo ip6tables -A FORWARD -i wlp11s0 -o wg0 -m conntrack --ctstate RELATED,ESTAB
 # Allow Samba over IPv6 (if used) from WireGuard clients
 sudo ip6tables -A INPUT -i wg0 -p tcp -m multiport --dports 139,445 -j ACCEPT
 sudo ip6tables -A INPUT -i wg0 -p udp -m multiport --dports 137,138 -j ACCEPT
+
+sudo ip6tables -N DOCKER-USER
+sudo ip6tables -I FORWARD -j DOCKER-USER
+sudo ip6tables -I DOCKER-USER -i wg0 -p tcp --dport 19999 -j REJECT
