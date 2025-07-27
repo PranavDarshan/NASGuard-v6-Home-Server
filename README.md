@@ -29,7 +29,7 @@
 
 ```bash
 git https://github.com/PranavDarshan/NASguard-v6
-cd NASguard-v6
+cd NASguard-v6-Home-Server
 ```
 
 ### 2. Setup WireGuard VPN
