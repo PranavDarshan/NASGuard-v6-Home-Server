@@ -28,7 +28,7 @@
 ### 1. Clone this Repo
 
 ```bash
-git https://github.com/PranavDarshan/NASguard-v6
+git clone https://github.com/PranavDarshan/NASguard-v6-Home-Server
 cd NASguard-v6-Home-Server
 ```
 
